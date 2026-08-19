@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinding Visualizer | Python & JS</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container-fluid py-4 main-container">
+    
+    <!-- Header Area -->
+    <header class="app-header text-center mb-4">
+        <h1 class="title">Pathfinding Visualizer</h1>
+        <p class="subtitle">Compute pathfinding algorithms in real-time on the server or in the browser</p>
+    </header>
+
+    <!-- Glass Dashboard Wrapper -->
+    <div class="dashboard-card mb-4">
+        <div class="row align-items-center g-3">
+            
+            <!-- Column 1: Mode & Connection Status -->
+            <div class="col-lg-3 col-md-6">
+                <div class="control-group">
+                    <span class="control-label">Execution Environment</span>
+                    <div class="mode-selector-wrapper mt-2">
+                        <div class="mode-toggle">
+                            <input type="radio" name="execMode" id="modeClient" value="client" checked>
+                            <label for="modeClient">
+                                💻 Browser JS
+                            </label>
+                            
+                            <input type="radio" name="execMode" id="modeServer" value="server">
+                            <label for="modeServer" id="modeServerLabel">
+                                🌐 Python API
+                            </label>
+                            <div class="slider-tab"></div>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot offline" id="statusDot"></span>
+                            <span class="status-text text-muted" id="statusText">Checking server...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2: Draw Tool Selector -->
+            <div class="col-lg-2 col-md-6">
+                <div class="control-group">
+                    <span class="control-label">Draw Mode</span>
+                    <div class="mode-selector-wrapper mt-2">
+                        <div class="tool-toggle">
+                            <input type="radio" name="drawTool" id="toolWall" value="wall" checked>
+                            <label for="toolWall">
+                                🧱 Wall
+                            </label>
+                            
+                            <input type="radio" name="drawTool" id="toolWeight" value="weight">
+                            <label for="toolWeight">
+                                ⚓ Weight
+                            </label>
+                            <div class="slider-tab"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: Algorithm Selector -->
+            <div class="col-lg-2 col-md-6">
+                <div class="control-group">
+                    <label for="algorithm" class="control-label">Algorithm</label>
+                    <select id="algorithm" class="form-select custom-select mt-2">
+                        <option value="bfs">Breadth First Search (BFS)</option>
+                        <option value="dfs">Depth First Search (DFS)</option>
+                        <option value="dijkstra">Dijkstra's Algorithm</option>
+                        <option value="astar">A* Search</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Column 4: Speed Slider -->
+            <div class="col-lg-2 col-md-6">
+                <div class="control-group">
+                    <div class="d-flex justify-content-between">
+                        <span class="control-label">Animation Delay</span>
+                        <span id="speedValue" class="text-info small">50ms</span>
+                    </div>
+                    <div class="slider-container mt-3">
+                        <input type="range" id="speedSlider" min="1" max="100" value="50" class="w-100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 5: Operational Buttons -->
+            <div class="col-lg-3 col-md-6 d-flex flex-wrap gap-2 justify-content-lg-end justify-content-start mt-lg-4">
+                <button id="startBtn" class="btn btn-start flex-grow-1 flex-lg-grow-0">
+                    <span class="btn-icon">▶</span> Start
+                </button>
+                <button id="stopBtn" class="btn btn-stop">
+                    <span class="btn-icon">■</span> Stop
+                </button>
+                <button id="clearGrid" class="btn btn-clear">
+                    Clear
+                </button>
+                <button id="mazeBtn" class="btn btn-maze flex-grow-1 w-100 mt-1">
+                    🎲 Generate Random Maze
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div class="stats-panel mb-4">
+        <div class="stat-box">
+            <span class="stat-label">Nodes Visited</span>
+            <span class="stat-number" id="visitedCount">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Path Cost</span>
+            <span class="stat-number" id="pathLength">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Compute Time</span>
+            <span class="stat-number" id="executionTime">0 ms</span>
+            <span class="badge bg-secondary ms-1 d-none" id="solverSourceBadge">Client</span>
+        </div>
+    </div>
+
+    <!-- Legend Bar -->
+    <div class="legend-bar mb-4">
+        <div class="legend-item"><span class="box startBox"></span> Start Node</div>
+        <div class="legend-item"><span class="box endBox"></span> End Node</div>
+        <div class="legend-item"><span class="box wallBox"></span> Wall / Obstacle</div>
+        <div class="legend-item"><span class="box weightBox"></span> Weight Node (Cost: 5)</div>
+        <div class="legend-item"><span class="box visitedBox"></span> Explored Node</div>
+        <div class="legend-item"><span class="box pathBox"></span> Shortest Path</div>
+    </div>
+
+    <!-- Main Visualizer Grid -->
+    <div class="grid-outer-container">
+        <div id="grid"></div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="algorithms/bfs.js"></script>
+<script src="algorithms/dfs.js"></script>
+<script src="algorithms/dijkstra.js"></script>
+<script src="algorithms/astar.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
